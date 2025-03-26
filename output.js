@@ -1,4 +1,4 @@
-//Mon Mar 10 2025 01:36:13 GMT+0000 (Coordinated Universal Time)
+//Wed Mar 26 2025 17:34:31 GMT+0000 (Coordinated Universal Time)
 //Base:https://github.com/echo094/decode-js
 //Modify:https://github.com/smallfawn/decode_action
 const $ = new Env("甬派");
@@ -714,42 +714,6 @@ const notify = $.isNode() ? require("../sendNotify") : "";
   }
   function y() {
     y = i(g().mark(function V() {
-      var W = {
-        KHUOV: "next",
-        qmEej: "GeneratorFunction",
-        vxzUl: function (aU, aV) {
-          return aU === aV;
-        },
-        MBICq: "throw",
-        RIfxO: function (aU, aV) {
-          return aU(aV);
-        },
-        MIBkR: "2|1|5|4|0|3",
-        oNBcu: function (aU, aV) {
-          return aU === aV;
-        },
-        WycYy: function (aU, aV) {
-          return aU === aV;
-        },
-        vAoha: function (aU, aV) {
-          return aU === aV;
-        },
-        bOplH: function (aU, aV) {
-          return aU !== aV;
-        },
-        myhuo: "return",
-        QlsuR: function (aU, aV) {
-          return aU + aV;
-        },
-        IbPfc: function (aU, aV) {
-          return aU + aV;
-        },
-        GINgx: "The iterator does not provide a '",
-        iSoYb: "iterator result is not an object",
-        GVhfv: function (aU, aV, aW, aX) {
-          return aU(aV, aW, aX);
-        }
-      };
       var X;
       var Y;
       var Z;
