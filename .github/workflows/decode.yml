@@ -4,41 +4,64 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - output.js
+      - output.py
 
 jobs:
   decode:
     runs-on: ubuntu-latest
+
     permissions:
       contents: write
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      # 👇 添加这一步来指定 Node 版本
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'   # 使用 Node 20 LTS，避免 isolated-vm 编译错误
+          node-version: "20"
+
+      - name: Show runtime versions
+        run: |
+          python --version
+          node --version
+          npm --version
 
       - name: Execute Python script for decoding
         run: |
           python src/decode.py
 
-      - name: Install dependencies and run decode
+      - name: Install Node.js dependencies
         run: |
           npm install
-          npm run decode -- -i input.js -o output.js   # 修正了参数传递写法
+
+      - name: Decode JavaScript file
+        run: |
+          npm run decode -- -i input.js -o output.js
 
       - name: Configure Git author
         run: |
           git config --local user.email "action@github.com"
-          git config --local user.name "action"
+          git config --local user.name "github-actions[bot]"
 
       - name: Save decoded output to repository
         run: |
           git status
-          ls
-          git add output.js
-          git add output.py
-          git commit -m "Add decoded output file"
-          git push
+          ls -la
+
+          git add output.js output.py
+
+          if git diff --cached --quiet; then
+            echo "Decoded output has not changed; skipping commit."
+          else
+            git commit -m "chore: update decoded output"
+            git push
+          fi
