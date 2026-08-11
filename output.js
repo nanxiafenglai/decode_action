@@ -1,4 +1,6 @@
-要你管？
+// 要你管？
+// 本文件由 decode-js 自动生成
+// 请勿手动修改
 ;
 eval(function (MeowShield) {
   return function ui(Zx, up, QA, uN, LA, uI, SQ, LN, Tu, Tx, Lp, NI, NS, Op, Im, SV, NL, iA) {
