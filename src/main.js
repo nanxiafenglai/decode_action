@@ -75,7 +75,11 @@ for (const plugin of plugins) {
 // Check if processed code differs from source code
 if (processedCode !== sourceCode) {
   time = new Date();
-  const header = ["要你管？"].join('\n');
+  const header = [
+  '// 要你管？',
+  '// 本文件由 decode-js 自动生成',
+  '// 请勿手动修改'
+].join('\n');
 
   // Combine header and processed code
   const outputCode = header + '\n' + processedCode;
