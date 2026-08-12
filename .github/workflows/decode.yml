@@ -1,67 +1,145 @@
-name: Decode JavaScript File
+name: Decode Input Files
 
 on:
   push:
     branches:
       - main
-    paths-ignore:
-      - output.js
-      - output.py
+    paths:
+      - "input.js"
+      - "input.py"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: decode-inputs-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   decode:
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: write
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          fetch-depth: 0
+
+      - name: Detect changed input files
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            js:
+              - "input.js"
+            py:
+              - "input.py"
+
+      # ==============================
+      # JavaScript decoding
+      # ==============================
 
       - name: Setup Node.js
+        if: steps.changes.outputs.js == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: "20"
 
-      - name: Show runtime versions
+      - name: Show Node.js versions
+        if: steps.changes.outputs.js == 'true'
         run: |
-          python --version
           node --version
           npm --version
 
-      - name: Execute Python script for decoding
+      - name: Install Node.js dependencies
+        if: steps.changes.outputs.js == 'true'
         run: |
+          if [ -f "package-lock.json" ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Decode input.js
+        if: steps.changes.outputs.js == 'true'
+        run: |
+          echo "检测到 input.js 发生修改，开始执行 JavaScript 解码。"
+          npm run decode -- -i input.js -o output.js
+
+          if [ ! -f "output.js" ]; then
+            echo "错误：JavaScript 解码后没有生成 output.js"
+            exit 1
+          fi
+
+      # ==============================
+      # Python decoding
+      # ==============================
+
+      - name: Setup Python
+        if: steps.changes.outputs.py == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Show Python version
+        if: steps.changes.outputs.py == 'true'
+        run: |
+          python --version
+
+      - name: Decode input.py
+        if: steps.changes.outputs.py == 'true'
+        run: |
+          echo "检测到 input.py 发生修改，开始执行 Python 解码。"
           python src/decode.py
 
-      - name: Install Node.js dependencies
-        run: |
-          npm install
+          if [ ! -f "output.py" ]; then
+            echo "错误：Python 解码后没有生成 output.py"
+            exit 1
+          fi
 
-      - name: Decode JavaScript file
-        run: |
-          npm run decode -- -i input.js -o output.js
+      # ==============================
+      # Commit generated output
+      # ==============================
 
       - name: Configure Git author
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "github-actions[bot]"
 
-      - name: Save decoded output to repository
+      - name: Add generated output files
+        env:
+          JS_CHANGED: ${{ steps.changes.outputs.js }}
+          PY_CHANGED: ${{ steps.changes.outputs.py }}
         run: |
-          git status
-          ls -la
-
-          git add output.js output.py
-
-          if git diff --cached --quiet; then
-            echo "Decoded output has not changed; skipping commit."
-          else
-            git commit -m "chore: update decoded output"
-            git push
+          if [ "$JS_CHANGED" = "true" ]; then
+            echo "添加 output.js"
+            git add output.js
           fi
+
+          if [ "$PY_CHANGED" = "true" ]; then
+            echo "添加 output.py"
+            git add output.py
+          fi
+
+          git status
+
+      - name: Commit and push outputs
+        env:
+          JS_CHANGED: ${{ steps.changes.outputs.js }}
+          PY_CHANGED: ${{ steps.changes.outputs.py }}
+        run: |
+          if git diff --cached --quiet; then
+            echo "输出文件没有发生变化，跳过提交。"
+            exit 0
+          fi
+
+          if [ "$JS_CHANGED" = "true" ] && [ "$PY_CHANGED" = "true" ]; then
+            COMMIT_MESSAGE="chore: update JavaScript and Python outputs"
+          elif [ "$JS_CHANGED" = "true" ]; then
+            COMMIT_MESSAGE="chore: update JavaScript output"
+          else
+            COMMIT_MESSAGE="chore: update Python output"
+          fi
+
+          git commit -m "$COMMIT_MESSAGE"
+          git push
